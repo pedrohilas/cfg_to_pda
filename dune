@@ -1,0 +1,5 @@
+(executable
+ (name cfg2pda)
+ (libraries unix str)
+ (preprocess (pps ppx_yojson_conv))
+)

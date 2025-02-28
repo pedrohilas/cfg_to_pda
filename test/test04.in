@@ -1,0 +1,188 @@
+//https://www.open-electronics.org/how-to-adjust-x-and-y-axis-scale-in-arduino-serial-plotter-no-extra-software-needed/
+//https://electronicsgoing.org/electronics-how-to-adjust-x-y-axis-scale-in-arduino-serial-plotter/
+//
+//https://arduinogetstarted.com/tutorials/arduino-serial-plotter?utm_content=cmp-true
+//
+//https://forum.arduino.cc/t/serial-plotter-very-fast-in-adruino-2-1/1123294/11
+//
+//  //fixar o eixo YY
+//  Serial.print("1.1, "); Serial.print("-1.1, ");
+
+#define samp_siz 4
+#define rise_threshold 4
+#define pino 7
+#define LED1 6
+#define LED2 10
+#define LED3 5
+#define LED4 9
+// Pulse Monitor Test Script
+int sensorPin = 0;
+
+    float reads[samp_siz], sum;
+    long int now, ptr;
+    float last, reader, start;
+    float first, second, third, before, print_value;
+    bool rising;
+    int rise_count;
+    int n;
+    long int last_beat;
+
+float x = 0;
+float y;
+
+
+void setup() {
+    Serial.begin(9600);
+
+    for (int i = 0; i < samp_siz; i++)
+      reads[i] = 0;
+    sum = 0;
+    ptr = 0;
+
+    Serial.print("START");
+
+    pinMode(pino, OUTPUT);
+
+    pinMode(LED1, OUTPUT);
+    pinMode(LED2, OUTPUT);
+    pinMode(LED3, OUTPUT);
+    pinMode(LED4, OUTPUT);
+
+}
+
+void loop()
+{
+      // calculate an average of the sensor
+      // during a 20 ms period (this will eliminate
+      // the 50 Hz noise caused by electric light
+      n = 0;
+      start = millis();
+      reader = 0.;
+      do
+      {
+        reader += analogRead (sensorPin);
+        n++;
+        now = millis();
+      }
+      while (now < start + 20);  
+      reader /= n;  // we got an average
+
+      //reader = reader - 190; //190 é o valor que se obtém com A0 desligado: a subtração não parece alterar a curva mas apenas o nível DC
+      //Serial.println(reader);
+      
+      // Add the newest measurement to an array
+      // and subtract the oldest measurement from the array
+      // to maintain a sum of last measurements
+      sum -= reads[ptr];
+      sum += reader;
+      reads[ptr] = reader;
+      last = sum / samp_siz;
+      // now last holds the average of the values in the array
+
+     // Serial.println(last);
+
+      //Serial.print("last:"); Serial.print(last); Serial.print(" "); //imprime a curva da pulsação(last) 
+
+      //if (last > 515) { Serial.print("pulse:"); Serial.print(last); Serial.print(" "); }  
+      // else {Serial.print("pulse:"); Serial.print(510); Serial.print(" "); }
+      //Serial.print('\n'); 
+    
+      // check for a rising curve (= a heart beat)
+      if (last > before && last > 515) //este valor de 515 é para impedir que picos pequenos possam
+                                       // ser considerados com batimentos - pode ter de ser ajustado
+      {
+        rise_count++; //por volta de 4
+        //Serial.println(rise_count);
+        if (!rising && rise_count > 2) //originalmente estava aqui > rise_threshold
+        {
+
+          digitalWrite(pino,HIGH); delay(50); digitalWrite(pino,LOW); //pisca momentaneamente o pino=7 a cada pulsação
+    sequentialLEDs();
+          // Ok, we have detected a rising curve, which implies a heartbeat.
+          // Record the time since last beat, keep track of the two previous
+          // times (first, second, third) to get a weighed average.
+          // The rising flag prevents us from detecting the same rise more than once.
+          rising = true;
+          first = millis() - last_beat;
+          last_beat = millis();
+
+          // Calculate the weighed average of heartbeat rate
+          // according to the three last beats
+          print_value = 60000. / (0.4 * first + 0.3 * second + 0.3 * third); //ORIGINAL - valor das pulsações
+
+          Serial.println(print_value);
+         // Serial.print("pulse:"); Serial.print(last); Serial.print(" "); //imprime a curva
+          //Serial.print('\n');
+          
+          third = second;
+          second = first;
+          
+        } //else Serial.print("pulse:"); Serial.print(510); Serial.print(" ");
+      }
+      else
+      {  //Serial.print("pulse:"); Serial.print(510); Serial.print(" ");
+        // Ok, the curve is falling
+        rising = false;
+        rise_count = 0;
+      }
+      before = last;
+            
+      ptr++;
+      ptr %= samp_siz;
+
+      //Serial.print('\n');
+
+      delay(1);
+
+}
+void sequentialLEDs() {
+    // Lista dos pinos dos LEDs
+    int leds[] = {LED1, LED2, LED3, LED4};
+
+    // Acender os LEDs em sequência
+    for (int i = 0; i < 4; i++) {
+        digitalWrite(leds[i], HIGH);
+        delay(100); // Tempo para cada LED permanecer aceso
+        digitalWrite(leds[i], LOW);
+    }
+    }
+//https://github.com/leandcesar/PeakDetection
+//https://arduino.stackexchange.com/questions/72650/how-to-find-the-peak-value-of-analog-signal
+
+
+ void loop1() //para testes gráficos
+{
+   //Serial.print("-1.5, "); Serial.print("1.5, "); //fixa os limites do gráfico
+
+   y = sin(x); //radianos
+   Serial.print(y); Serial.print(" ");
+
+   last = y; 
+   if (last > before && last > 0.5)
+      {
+        rise_count++;
+        if (!rising && rise_count > 4)
+        { 
+          rising = true;
+          Serial.print(1.0); Serial.print(" ");
+
+        } else Serial.print(-1.50); Serial.print(" ");
+      } 
+   else
+      { Serial.print(-1.50); Serial.print(" ");
+        rising = false;
+        rise_count = 0;
+      }
+   before = last;
+
+
+   //if (y >= 0.998) Serial.print(1.0); else Serial.print(0.0);
+   //Serial.print(" ");
+   
+   Serial.println();
+
+
+  x = x + 0.1;
+
+ delay(10);
+ }
