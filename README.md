@@ -1,6 +1,8 @@
-# cfg_to_pda
+# CFG to PDA Converter
 
+This OCaml project converts Context-Free Grammars (CFG) into Pushdown Automata (PDA). It helps students and researchers working with formal languages.
 
-Este projeto em OCaml converte Gramáticas Livres de Contexto (CFG) em Autómatos com Pilha (PDA) e simula a aceitação de palavras em PDAs definidos em formato JSON. Além disso, permite a simulação direta de palavras em PDAs definidos pelo utilizador. 
-
-Para correr o programa, utiliza o comando: cat test/test01.in | dune exec -- ./re.exe
+## 🔧 Installation & Usage
+To run:
+```bash
+cat test/test01.in | dune exec -- ./cfg_to_pda.exe
