@@ -5,4 +5,4 @@ This OCaml project converts Context-Free Grammars (CFG) into Pushdown Automata (
 ## 🔧 Installation & Usage
 To run:
 ```bash
-cat test/test01.in | dune exec -- ./cfg_to_pda.exe
+cat test/test01.in | dune exec -- ./cfg2pda.exe
